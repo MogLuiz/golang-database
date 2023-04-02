@@ -41,11 +41,20 @@ func main() {
 		panic(err)
 	}
 
-	productSearch, err := showProduct(db, "96114a79-addb-4f45-ac55-881108077bcd")
+	searchedProduct, err := showProduct(db, "96114a79-addb-4f45-ac55-881108077bcd")
 	if err != nil {
 		panic(err)
 	}
-	fmt.Printf("product: %v, possui o preço de %.2f", productSearch.Name, productSearch.Price)
+	fmt.Printf("product: %v, possui o preço de %.2f", searchedProduct.Name, searchedProduct.Price)
+
+	productList, err := listProducts(db)
+	if err != nil {
+		panic(err)
+	}
+
+	for _, p := range productList {
+		fmt.Printf("product: %v, possui o preço de %.2f\n", p.Name, p.Price)
+	}
 }
 
 func insertProduct(db *sql.DB, product *Product) error {
@@ -93,4 +102,24 @@ func showProduct(db *sql.DB, id string) (*Product, error) {
 	}
 
 	return &productData, nil
+}
+
+func listProducts(db *sql.DB) ([]Product, error) {
+	rows, err := db.Query("select id, name, price from products")
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var products []Product
+	for rows.Next() {
+		var p Product
+		err = rows.Scan(&p.ID, &p.Name, &p.Price)
+		if err != nil {
+			return nil, err
+		}
+		products = append(products, p)
+	}
+
+	return products, nil
 }
