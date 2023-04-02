@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"fmt"
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/google/uuid"
@@ -39,6 +40,12 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+
+	productSearch, err := showProduct(db, "96114a79-addb-4f45-ac55-881108077bcd")
+	if err != nil {
+		panic(err)
+	}
+	fmt.Printf("product: %v, possui o preço de %.2f", productSearch.Name, productSearch.Price)
 }
 
 func insertProduct(db *sql.DB, product *Product) error {
@@ -67,4 +74,23 @@ func updateProduct(db *sql.DB, product *Product) error {
 		panic(err)
 	}
 	return nil
+}
+
+func showProduct(db *sql.DB, id string) (*Product, error) {
+	stmt, err := db.Prepare("select id, name, price from products where id = ?")
+	if err != nil {
+		return nil, err
+	}
+	defer stmt.Close()
+
+	var productData Product
+
+	// QueryRow busca apenas uma linha do meu DB
+	// O scan pega o valor de cada coluna e atribui a meu ponteiro
+	err = stmt.QueryRow(id).Scan(&productData.ID, &productData.Name, &productData.Price)
+	if err != nil {
+		return nil, err
+	}
+
+	return &productData, nil
 }
